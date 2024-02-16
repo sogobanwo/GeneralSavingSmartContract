@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.8.0;
+import "./ISavingsToken.sol";
 
 contract GeneralSavings {
     address savingToken;
@@ -13,17 +14,36 @@ contract GeneralSavings {
         owner = msg.sender;
     }
 
+        event SavingSuccessful(address indexed user, uint256 indexed amount);
+
+
     function depositEther(uint _etherAmount ) payable external{
         require(msg.sender != address(0), "address zero detected");
-        
+        require(_etherAmount > 0, "Can't save 0 ethers");
+        etherSavings[msg.sender] = etherSavings[msg.sender] + msg.value;
+        emit SavingSuccessful(msg.sender, msg.value);
     }
 
     function depositToken(uint _savingsTokenAmount) view external{
         require(msg.sender != address(0), "address zero detected");
+        require(_savingsTokenAmount > 0, "Can't save 0 Token") ;
+        require(ISavingsToken(savingToken).balanceOf(msg.sender) >= _savingsTokenAmount, "not enough tokens");
+
+
     }
 
-    function withdrawEther( uint _etherAmount ) external{
-        
+    function withdrawEther( uint _etherAmountToBeWithdrawn ) external{
+         require(msg.sender != address(0), "address zero detected");
+
+        uint256 _userExistingSavings = etherSavings[msg.sender];
+
+        require(_userExistingSavings > 0, "you don't have any savings");
+
+        require(_userExistingSavings > _etherAmountToBeWithdrawn, "you don't up the amount inputed");
+
+        _userExistingSavings = _userExistingSavings - _etherAmountToBeWithdrawn;
+
+        payable(msg.sender).transfer(_etherAmountToBeWithdrawn);
     }
 
     function withdrawToken( uint _savingsTokenAmount ) external{
@@ -31,7 +51,7 @@ contract GeneralSavings {
     }
 
     function checkSaverEtherBalance(address _saver) external view returns (uint) {
-             
+          return  etherSavings[_saver];
 
     }
 
@@ -41,7 +61,7 @@ contract GeneralSavings {
     }
 
     function checkContractEtherBalance() external view  returns (uint) {
-        
+        return address(this).balance;
     }
 
     function checkContractTokenBalance() external view  returns (uint) {
