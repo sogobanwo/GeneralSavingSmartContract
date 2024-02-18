@@ -18,9 +18,9 @@ contract GeneralSavings {
     event WithdrawSuccessful(address receiver, uint256 amount);
 
 
-    function depositEther(uint _etherAmount ) payable external{
+    function depositEther()  external payable{
         require(msg.sender != address(0), "address zero detected");
-        require(_etherAmount > 0, "Can't save 0 ethers");
+        require(msg.value > 0, "Can't save 0 ethers");
         etherSavings[msg.sender] = etherSavings[msg.sender] + msg.value;
         emit SavingSuccessful(msg.sender, msg.value);
     }
@@ -38,15 +38,13 @@ contract GeneralSavings {
     }
 
     function withdrawEther( uint _etherAmountToBeWithdrawn ) external{
-         require(msg.sender != address(0), "address zero detected");
+        require(msg.sender != address(0), "address zero detected");
 
-        uint256 _userExistingSavings = etherSavings[msg.sender];
+        require(etherSavings[msg.sender] > 0, "you don't have any savings");
 
-        require(_userExistingSavings > 0, "you don't have any savings");
+        require(etherSavings[msg.sender] > _etherAmountToBeWithdrawn, "you don't up the amount inputed");
 
-        require(_userExistingSavings > _etherAmountToBeWithdrawn, "you don't up the amount inputed");
-
-        _userExistingSavings = _userExistingSavings - _etherAmountToBeWithdrawn;
+        etherSavings[msg.sender] = etherSavings[msg.sender] - _etherAmountToBeWithdrawn;
 
         payable(msg.sender).transfer(_etherAmountToBeWithdrawn);
     }
@@ -82,7 +80,11 @@ contract GeneralSavings {
     }
 
     function checkContractTokenBalance() external view  returns (uint) {
-                return ISavingsToken(savingToken).balanceOf(address(this));
+        return ISavingsToken(savingToken).balanceOf(address(this));
 
+    }
+
+    function addressZero() external pure returns (address){
+        return address(0);
     }
 }
